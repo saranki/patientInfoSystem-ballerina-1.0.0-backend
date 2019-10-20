@@ -18,7 +18,6 @@ service PatientData on httpListener {
         methods: ["POST"],
         path: "/patients"
     }
-
     resource function addPatientPersonalRecord(http:Caller caller, http:Request req) {
         http:Response response = new;
         string patientName = "Tina";
@@ -26,7 +25,6 @@ service PatientData on httpListener {
         string emailId = "tina@gmail.com";
         json addPatientRecord = createPatientRecord(patientName, phoneNo, emailId);
         response.setPayload(<@untainted>addPatientRecord);
-        // Send a response back to the caller.
         var result = caller->respond(response);
         handleError(result);
     }
@@ -35,17 +33,14 @@ service PatientData on httpListener {
         methods: ["POST"],
         path: "/patients/medicine/{patientId}"
     }
-
     resource function addPatientMedicalRecord(http:Caller caller, http:Request req, int patientId) {
         http:Response response = new;
-        int medicalId = 1;
-        string doctorName = "Dr.Tom";
-        string disease = "Stomach Pain";
-        string medicine = "Asamothagam";
+        string doctorName = "Dr.Jane";
+        string disease = "Hand Pain";
+        string medicine = "Balm";
 
-        json addPatientRecord = createMedicalRecord(patientId, medicalId, doctorName, disease, medicine);
+        json addPatientRecord = createMedicalRecord(patientId, doctorName, disease, medicine);
         response.setPayload(<@untainted>addPatientRecord);
-        // Send a response back to the caller.
         var result = caller->respond(response);
         handleError(result);
     }
@@ -54,13 +49,11 @@ service PatientData on httpListener {
         methods: ["GET"],
         path: "/patients"
     }
-
-    // Resource functions are invoked with the HTTP caller and the incoming request as arguments.
     resource function getAllPatientRecords(http:Caller caller, http:Request req) {
+        var i = getMedicalRecordId(19);
         http:Response response = new;
         json allPatientRecord = retrieveAllPatientDetails();
         response.setPayload(<@untainted>allPatientRecord);
-        // Send a response back to the caller.
         var result = caller->respond(response);
         handleError(result);
     }
@@ -69,11 +62,8 @@ service PatientData on httpListener {
         methods: ["GET"],
         path: "/patients/{patientId}"
     }
-
-    // Resource functions are invoked with the HTTP caller and the incoming request as arguments.
     resource function getIndividualPatientPersonalRecord(http:Caller caller, http:Request req, int patientId) {
         http:Response response = new;
-        io:println("Patient Id: ", patientId.toString());
         if (patientId > 0) {
             json patientRecord = retrievePersonalRecordsById(patientId);
             response.setPayload(<@untainted>patientRecord);
@@ -90,8 +80,6 @@ service PatientData on httpListener {
         methods: ["GET"],
         path: "/patients/medicine/{patientId}"
     }
-
-    // Resource functions are invoked with the HTTP caller and the incoming request as arguments.
     resource function getIndividualPatientMedicalRecord(http:Caller caller, http:Request req, int patientId) {
         http:Response response = new;
         io:println("Patient Id: ", patientId.toString());
