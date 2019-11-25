@@ -20,9 +20,10 @@ string getAllMedicalRecordsForSpecificPatientQuery = "SELECT * FROM patient p, m
 # + patientName - patientName Parameter Description 
 # + phoneNo - phoneNo Parameter Description 
 # + emailId - emailId Parameter Description
-function createPatientRecord(string patientName, int phoneNo, string emailId) {
+# + return - Return Value Description
+function createPatientRecord(string patientName, int phoneNo, string emailId) returns int {
     var output = patientDB->update("INSERT INTO patient(patient_name, phone_number, email_id) VALUES (?, ?, ?)", patientName, phoneNo, emailId);
-    handleUpdate(output, "Creating patient record...");
+    return handleUpdate(output, "Creating patient record...");
 }
 
 # Description
@@ -57,13 +58,17 @@ function getMedicalRecordId(int patientId) returns int {
 # + patientId - patientId Parameter Description 
 # + doctorName - doctorName Parameter Description 
 # + disease - disease Parameter Description 
-# + medicine - medicine Parameter Description
-function createMedicalRecord(int patientId, string doctorName, string disease, string medicine) {
+# + medicine - medicine Parameter Description 
+# + return - Return Value Description
+function createMedicalRecord(int patientId, string doctorName, string disease, string medicine) returns int {
     int medicalRecordId = getMedicalRecordId(patientId);
     var output = patientDB->update("INSERT INTO medicine(patient_id, medical_record, doctor_name, disease, medicine) VALUES (?, ?, ?, ?, ?)", patientId, medicalRecordId, doctorName, disease, medicine);
-    handleUpdate(output, "Creating medicine record...");
+    return handleUpdate(output, "Creating medicine record...");
 }
 
+# Description
+# Get all the patients' details
+# + return - Return Value Description
 function retrieveAllPatientDetails() returns json {
     var patientRecord = patientDB->select(getAllPatientsQuery, ());
     if (patientRecord is table<record {}>) {
@@ -75,10 +80,15 @@ function retrieveAllPatientDetails() returns json {
     }
 }
 
-function retrievePersonalRecordsById(int id) returns json {
-    var individualPatientPersonalRecord = patientDB->select(getPersonalPatientQuery, (), id);
+# Description
+# Get a particular patient's personal details by patient Id.
+# + patientId - id Parameter Description 
+# + return - Return Value Description
+function retrievePersonalRecordsById(int patientId) returns json {
+    var individualPatientPersonalRecord = patientDB->select(getPersonalPatientQuery, (), patientId);
     if (individualPatientPersonalRecord is table<record {}>) {
         var individualPatientPersonalRecordJson = jsonutils:fromTable(individualPatientPersonalRecord);
+        io:println("Output length: ", individualPatientPersonalRecordJson.size);
         return individualPatientPersonalRecordJson;
     } else {
         error err = individualPatientPersonalRecord;
@@ -86,10 +96,15 @@ function retrievePersonalRecordsById(int id) returns json {
     }
 }
 
-function retrieveMedicalRecordsById(int id) returns json {
-    var individualPatientMedicalRecord = patientDB->select(getAllMedicalRecordsForSpecificPatientQuery, (), id);
+# Description
+# Get a particular patient's medical details by patient Id.
+# + patientId - id Parameter Description 
+# + return - Return Value Description
+function retrieveMedicalRecordsById(int patientId) returns json {
+    var individualPatientMedicalRecord = patientDB->select(getAllMedicalRecordsForSpecificPatientQuery, (), patientId);
     if (individualPatientMedicalRecord is table<record {}>) {
         var individualPatientMedicalRecordJson = jsonutils:fromTable(individualPatientMedicalRecord);
+        io:println("Output length: ", individualPatientMedicalRecordJson.size);
         return individualPatientMedicalRecordJson;
     } else {
         error err = individualPatientMedicalRecord;
@@ -97,11 +112,55 @@ function retrieveMedicalRecordsById(int id) returns json {
     }
 }
 
-function handleUpdate(jdbc:UpdateResult | jdbc:Error returned, string message) {
+// [
+//     {
+//         "patient_id": 1,
+//         "patient_name": "Tina",
+//         "phone_number": 736282936,
+//         "email_id": "tina@gmail.com",
+//         "MEDICINE.patient_id": 1,
+//         "medical_record": 0,
+//         "doctor_name": "Dr.Tom",
+//         "disease": "Stomach Pain",
+//         "medicine": "Asamothagam"
+//     },
+//     {
+//         "patient_id": 1,
+//         "patient_name": "Tina",
+//         "phone_number": 736282936,
+//         "email_id": "tina@gmail.com",
+//         "MEDICINE.patient_id": 1,
+//         "medical_record": 1,
+//         "doctor_name": "Dr.Tom",
+//         "disease": "Stomach Pain",
+//         "medicine": "Asamothagam"
+//     }
+// ]
+
+function retrieveMedicalRecordsByIdFormattedRespose(int patientId) {
+    json output = retrieveMedicalRecordsById(patientId);
+    json patinetDetails = {};
+    json[] medicalRecords;
+    io:println("Output length: ", output.size);
+
+// foreach var medicalRecord in output {
+
+// }
+}
+
+# Description
+# Handles the sql query updates and returns the state of it.
+# + returned - returned Parameter Description 
+# + message - message Parameter Description 
+# + return - Return Value Description
+function handleUpdate(jdbc:UpdateResult | jdbc:Error returned, string message) returns int {
+    int flag = -1;
     if (returned is jdbc:UpdateResult) {
         io:println(message, " status: ", returned.updatedRowCount);
+        flag = returned.updatedRowCount;
     } else {
         error err = returned;
         io:println(message, " failed: ", <string>err.detail()["message"]);
     }
+    return flag;
 }

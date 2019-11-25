@@ -23,7 +23,8 @@ service PatientData on httpListener {
         string patientName = "Tina";
         int phoneNo = 736282936;
         string emailId = "tina@gmail.com";
-        json addPatientRecord = createPatientRecord(patientName, phoneNo, emailId);
+
+        int addPatientRecord = createPatientRecord(patientName, phoneNo, emailId);
         response.setPayload(<@untainted>addPatientRecord);
         var result = caller->respond(response);
         handleError(result);
@@ -39,7 +40,7 @@ service PatientData on httpListener {
         string disease = "Hand Pain";
         string medicine = "Balm";
 
-        json addPatientRecord = createMedicalRecord(patientId, doctorName, disease, medicine);
+        int addPatientRecord = createMedicalRecord(patientId, doctorName, disease, medicine);
         response.setPayload(<@untainted>addPatientRecord);
         var result = caller->respond(response);
         handleError(result);
@@ -94,6 +95,38 @@ service PatientData on httpListener {
             log:printError("No patient Id has been provided...");
         }
     }
+
+    @http:ResourceConfig {
+            methods: ["GET"],
+            path: "/login/{username}/{password}"
+        }
+        resource function getLoginUserRecord(http:Caller caller, http:Request req, string username, string password) {
+            http:Response response = new;
+            io:println("Username: ", username);
+            io:println("Password: ", password);
+
+                string role = retrieveLoginUsersByUsernameAndPassword(username, password);
+                response.setPayload(<@untainted>role);
+                // Send a response back to the caller.
+                var result = caller->respond(response);
+                handleError(result);
+        }
+
+    @http:ResourceConfig {
+            methods: ["POST"],
+            path: "/users"
+        }
+        resource function addPLoginUserRecord(http:Caller caller, http:Request req) {
+            http:Response response = new;
+            string username = "DrPeter";
+            string password = "john123";
+            string role = "doctor";
+
+            int addUserRecord = createLoginUserRecord(username, password, role);
+            response.setPayload(<@untainted>addUserRecord);
+            var result = caller->respond(response);
+            handleError(result);
+        }
 }
 
 function handleError(error? result) {
